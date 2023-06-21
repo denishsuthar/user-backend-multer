@@ -4,6 +4,7 @@ import ErrorHandler from "../utils/errorHandler.js"
 import sendToken from "../utils/sendToken.js"
 import sendEmail from "../utils/sendEmail.js";
 import crypto from "crypto"
+import {generateUsername, generateUniqueUsername} from "../utils/generateUserName.js"
 
 // Register User
 export const register = catchAsyncError(async(req, res, next)=>{
@@ -14,11 +15,24 @@ export const register = catchAsyncError(async(req, res, next)=>{
     let user = await User.findOne({email})
     if(user) return next(new ErrorHandler("User Already Registered, Please Login", 400));
 
-    user = await User.create({
-        name, email, password, mobileNumber, avatar
-    })
+    // Generating UserName
+    let userName = generateUsername(name);
+    let usernameExists = true;
+    let counter = 1;
 
-    sendToken(res, user, "Registred Successfully", 201)
+    while (usernameExists){
+        const existingUser = await User.findOne({ userName });
+        if (existingUser) {
+            userName = generateUniqueUsername(name, counter);
+            counter++;
+          } else{
+            user = await User.create({
+                name, email, password, mobileNumber, avatar, userName
+            })
+            sendToken(res, user, "Registred Successfully", 201)
+            usernameExists = false;
+          }
+    }
 })
 
 // export const registerManyImages = catchAsyncError(async(req, res, next)=>{
@@ -219,5 +233,14 @@ export const deleteUser = catchAsyncError(async(req, res, next)=>{
     res.status(200).json({
         success:true,
         message:"User Deleted Successfully"
+    })
+})
+
+// All Users Infinite
+export const usersInfinite = catchAsyncError(async(req, res, next)=>{
+    const skip =  req.query.skip && /^\d+$/.test(req.query.skip) ? Number(req.query.skip) : 0
+    const users = await User.find({}, undefined, {skip, limit:5}).sort({ _id: -1 })
+    res.status(200).json({
+        users
     })
 })

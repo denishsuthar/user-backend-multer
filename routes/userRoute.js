@@ -1,5 +1,5 @@
 import express from "express";
-import { allUsers, deleteUser, findUser, forgotPassword, login, logout, myProfile, register, resetPassword, updatePassword, updateProfile, updateRole } from "../controller/userController.js";
+import { allUsers, deleteUser, findUser, forgotPassword, login, logout, myProfile, register, resetPassword, updatePassword, updateProfile, updateRole, usersInfinite } from "../controller/userController.js";
 import { isAdmin, isAuthenticatedUser } from "../middelware/auth.js";
 import singleUpload from "../middelware/multer.js";
 
@@ -26,6 +26,8 @@ router.route("/password/update").put(isAuthenticatedUser, updatePassword)
 
 
 // Admin Routes
+router.route("/admin/allusers").get(isAuthenticatedUser,isAdmin,usersInfinite)
+
 router.route("/admin/users").get(isAuthenticatedUser,isAdmin,allUsers)
 
 router.route("/admin/user/:id").delete(isAuthenticatedUser, isAdmin, deleteUser).get(isAuthenticatedUser, isAdmin, findUser).put(isAuthenticatedUser, isAdmin, updateRole)
